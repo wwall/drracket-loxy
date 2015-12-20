@@ -1,0 +1,24 @@
+#lang scribble/doc
+@(require scribble/core) 
+@(require scribble/manual)
+@(require scribble/bnf)
+@(require "../../lang/lexer/lexer.scm")
+@(define (todo . s)
+   (let [(text (list (string-append "TODO " (car s))))]
+     (red-text text))) 
+
+@title[#:version "0.1"
+                 #:date "2014-11-24"]{Разработка статического анализатора языка 1С}
+@(author+email "Бомбин Валентин" "wwall@yandex.ru" #:obfuscate? #t)
+@;----
+@local-table-of-contents[]
+
+@section{Введение}
+@subsection{Благодарности}
+@para{Эта статья никогда не увидела бы свет, если бы не поддержка моей жены - Людмилы. Мой ласковый ангел, эту статью я посвящаю тебе и твоему терпению.}
+@subsection{О чем пойдет речь?}
+@para{Если вам часто приходиться анализировать чужой код или оценивать чужие разработки, то рано или поздно возникнет идея автоматизировать собственную работу. Вот именно этой автоматизации и посвящена эта работа}
+@section{Как все это будет работать}
+
+@section{Что дальше?}
+
