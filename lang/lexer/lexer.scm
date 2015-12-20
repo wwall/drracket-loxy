@@ -47,7 +47,8 @@
               (lambda (type value)
                 (begin
                   (maybe-only-id! (or (eq? type 'lxmDOT) (eq? type 'lxmAS)))
-                  (make-token line-position (- column-position (string-length value)) type value))))
+                  (make-token line-position (- column-position
+                                               (if (string? value) (string-length value) 1)) type value))))
              ;;; Complicated token processing functions:
              (is-whitespace
               (lambda (c)
@@ -99,7 +100,7 @@
             ((eof-object? c)
              (new-token null ""))
             ((is-whitespace c)
-             (recognize-token (my-read-char)))
+             (new-token 'lxmWS c))
             
             ((or (eq? c #\_) (char-alphabetic? c))
              (let ((id (read-identifier (list c))))

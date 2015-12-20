@@ -8,6 +8,15 @@
   (token size) #:transparent)
 
 
+(define rule-hash (make-hash))
+
+(define (add-rule type func)
+  (hash-set! rule-hash type func)
+  )
+
+
+
+
 (define (rule-LOC input-list output-list)
   (define (calc-fun-len data)
     (make-structure-rule-loc
@@ -37,3 +46,10 @@
         [else (rule-LOC (cdr input-list) output-list)])))
 
 
+
+(add-rule 'rule-LOC rule-LOC)
+
+
+(define (apply-rules token-list)
+
+  (hash-map rule-hash (lambda (k v) (list k (v token-list '()))) ))
