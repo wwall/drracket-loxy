@@ -1,6 +1,5 @@
 #lang racket
 
-
 (provide (all-defined-out))
 
 ;;; список правил анализатора токенов
@@ -10,23 +9,22 @@
 (define (get-rule-list)
   rule-hash)
 
-(define-struct rule-struct
-  (name func time description))
 
-(define (full-list)
-  'strategy-LIST)
+;;;; интерфейс который должен реализовать клас правила лексера
+(define lexer-rule (interface () init-work get-description put-token get-result end-work))
 
-
-(define (by-token)
-  'by-token)
-
-(define (add-rule name func time description)
-  (hash-set! rule-hash name (make-rule-struct name func time description)))
+(define (add-rule name rule)
+  (hash-set! rule-hash name rule))
 
 
 (define (list-rules)
-  (hash-for-each rule-hash (lambda (k v) (printf "~nИд правила : {~a} ~nОписание : {~a}" k (rule-struct-description v)))))
+  (hash-for-each rule-hash (lambda (k v) (printf "~nИд правила : {~a} ~nОписание : {~a}" k (send v get-description)))))
 
-  
+
 (define (apply-rules token-list)
-  (hash-map rule-hash (lambda (k v) (list k ((rule-struct-func v) token-list null)))))
+  (for-each (lambda (y)
+              (hash-map rule-hash
+                        (lambda (k v) (list k ((send v put-token y))))))
+            token-list))
+
+

@@ -39,4 +39,48 @@
 
 
 
-(add-rule 'rule-LOC rule-LOC (full-list) "Рассчитывает количество строк в функции или процедуре. На выходе - структура с идентификатором и количеством строк")
+
+(define loc-rule%
+  (class* object% (lexer-rule)
+    (init start end)
+    (define start-token start)
+    (define end-token end)
+    (define result (list))
+    (define token-list (list))
+    
+    (super-new)
+    (define/private (calc-data last-token)
+      (let* [(start-token (find (lambda (x) (eq? start-token (token-type x))) token-list))
+            (after (drop-while (lambda (x) (eq? start-token (token-type x))) token-list))
+            (id (find (lambda (x) (eq? 'tknID (token-type x))) after))
+            (name (token-value id))
+            (len (- (token-line last-token) (token-line start-token)))]
+        (set! token-list (list))
+      (list ':id name ':len len)))
+
+      
+    (define/public (init-work)
+      (set! result (list))
+      (set! token-list (list)))
+    (define/public (put-token token)
+      (if (eq? end-token (token-type token))
+          (set! result (append result (list (calc-data token))))
+          (set! token-list (append token-list (list token)))))
+
+    (define/public (get-result)
+      result)
+    (define/public (get-description)
+       "Рассчитывает количество строк в функции или процедуре. На выходе - структура с идентификатором и количеством строк")
+    (define/public (end-work)
+      (set! result null)
+      (set! token-list null))))
+
+
+;(define tst-data (file->token-list "../test-data/loc-file-test.txt"))
+;(define funcs (new loc-rule% [start 'lxmFUNC] [end 'lxmENDFUNC]))
+;(for-each (lambda (x) (send funcs put-token x)) tst-data)
+;(send funcs get-result)
+
+
+(add-rule 'rule-LOC (new loc-rule% [start 'lxmFUNC] [end 'lxmENDFUNC]) )
+
