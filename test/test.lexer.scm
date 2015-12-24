@@ -5,16 +5,13 @@
   "../lang/lexer/lexer.scm")
 
 
-(define lex->list
-  (lambda (s)
-    (maybe-only-id! #f)
-    (let* ([buf (open-input-string (string-append s " "))]
-           [lexer (construct-lexer buf )])
-      (let loop ((results '()))
-        (let ((next-token   (lexer)))
-          (if (null? (token-type next-token))
-              (reverse results)
-              (loop (cons  (list (token-type next-token) (token-value next-token)) results))))))))
+(define (lex->list s)
+  (map (lambda (x) (list (token-type x) (token-value x)))
+     (filter (lambda(x) (not (eq? (token-type x) 'lxmWS)))
+         (string->token-list (string-append s " ")))))
+
+
+
 
 
 (test-case

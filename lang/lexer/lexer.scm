@@ -2,6 +2,7 @@
 ; Лексер для языка запросов
 
 (require 
+  (prefix-in util: "../../utils/utils.rkt")
   "exception-api.scm"
   "keywords.scm")
 
@@ -16,8 +17,9 @@
  file->token-list)
 
 
-(define-struct token
-  ( line column type value) #:transparent)
+(struct token
+  (line column type value id) ;;; Счетчик токенов. Дальше все ссылаются именно на него)
+  #:transparent)
 
 (define construct-lexer
   (lambda (input-port )
@@ -47,8 +49,9 @@
               (lambda (type value)
                 (begin
                   (maybe-only-id! (or (eq? type 'lxmDOT) (eq? type 'lxmAS)))
-                  (make-token line-position (- column-position
-                                               (if (string? value) (string-length value) 1)) type value))))
+                  (token line-position (- column-position
+                                               (if (string? value) (string-length value) 1))
+                              type value (util:gID)))))
              ;;; Complicated token processing functions:
              (is-whitespace
               (lambda (c)
@@ -120,17 +123,17 @@
              (new-token 'lxmOPEN "("))
             ((char=? c #\))
              (new-token 'lxmCLOSE ")"))
-
+            
             ((char=? c #\[)
              (new-token 'lxmBOPEN "["))
             ((char=? c #\])
              (new-token 'lxmBCLOSE "]"))
-
+            
             ((char=? c #\?)
              (new-token 'lxmQUEST "?"))
             ((char=? c #\#)
              (new-token 'lxmPREPROCESSORSTART "#"))
-
+            
             ((char=? c #\+)
              (new-token 'lxmPLUS "+"))
             ((char=? c #\-)
