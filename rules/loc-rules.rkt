@@ -5,6 +5,8 @@
 
 (provide (all-defined-out))
 
+(struct rule-struct
+  (id value))
 (define loc-rule%
   (class* object% (lexer-rule)
     (init start end)
@@ -21,7 +23,7 @@
             (name (token-value id))
             (len (- (token-line last-token) (token-line start-token)))]
         (set! token-list (list))
-      (list ':id name ':len len)))
+      (rule-struct  name   len )))
 
       
     (define/public (init-rule)
@@ -33,7 +35,7 @@
           (set! token-list (append token-list (list token)))))
 
     (define/public (get-result)
-      result)
+      (map (lambda (x) (list 'rule-loc '()  (list 'id '() (rule-struct-id x)) (list 'len '() (number->string (rule-struct-value x))))) result) )
     (define/public (get-description)
        "Рассчитывает количество строк в функции или процедуре. На выходе - структура с идентификатором и количеством строк")
     (define/public (end-work)

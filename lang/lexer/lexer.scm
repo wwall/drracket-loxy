@@ -28,7 +28,7 @@
              (column-position 1)
              (my-read-char
               (lambda ()
-                (let ((c (read-char input-port)))
+                (let ((c (read-char-or-special input-port)))
                   (cond
                     ((eof-object? c)
                      c)
@@ -40,7 +40,10 @@
                      (set! column-position (+ column-position 1))
                      c)))))
              (my-peek-char
-              (lambda () (peek-char input-port)))
+              (lambda () (let [(t (peek-char input-port))]
+                           (if (eof-object? t)
+                               null
+                               t))))
              (lexer-error
               (lambda (message character)
                 (throw-wtf-exception ; Abort lexing with error message
@@ -81,7 +84,7 @@
              (read-identifier ; Read sequence of letters and digits
               (lambda (id)
                 (let ((c (my-peek-char)))
-                  (if (or (char-alphabetic? c) (char-numeric? c) (eq? c #\_))
+                  (if (and c (or (char-alphabetic? c) (char-numeric? c) (eq? c #\_)))
                       (read-identifier (cons (my-read-char) id))
                       (apply string (reverse id))))))
              (read-string ; Read a string's content
@@ -101,7 +104,9 @@
           
           (cond
             ((eof-object? c)
-             (new-token null ""))
+             (new-token 'lxmEOF ""))
+            ((char=? c #\uFEFF)
+             (new-token 'lxmEOF ""))
             ((is-whitespace c)
              (new-token 'lxmWS c))
             
@@ -171,7 +176,7 @@
                    (new-token 'lxmGT-EQU ">="))
                  (new-token 'lxmGT ">")))
             (else
-             (lexer-error "Illegal character." c))))))))
+             (lexer-error  "Illegal character." c))))))))
 
 
 (define string->token-list
