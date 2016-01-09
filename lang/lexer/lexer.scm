@@ -6,20 +6,30 @@
   "exception-api.scm"
   "keywords.scm")
 
+(struct token
+  (line ;; номер строки
+   column ;; номер колонки
+   type ;; тип лексемы
+   value ;; значение лексемы (null если значение лексемы востанавливается из типа, например для "+" будет тип lxmPLUS)
+   id) ;;; Счетчик токенов. Дальше все ссылаются именно на него)
+  #:transparent)
+
+
+
 
 (provide
  token-line
  token-column
  token-type
  token-value
+ token-id
  construct-lexer
  string->token-list
  file->token-list)
 
 
-(struct token
-  (line column type value id) ;;; Счетчик токенов. Дальше все ссылаются именно на него)
-  #:transparent)
+
+
 
 (define construct-lexer
   (lambda (input-port )
@@ -46,7 +56,7 @@
                                t))))
              (lexer-error
               (lambda (message character)
-                (throw-wtf-exception ; Abort lexing with error message
+                (throw-wtf-exception  ;;;Abort lexing with error message
                  (string-append "Lexer Error (" (number->string line-position) "," (number->string column-position) ";[" (string character) "]): " message))))
              (new-token
               (lambda (type value)
@@ -84,9 +94,22 @@
              (read-identifier ; Read sequence of letters and digits
               (lambda (id)
                 (let ((c (my-peek-char)))
-                  (if (and c (or (char-alphabetic? c) (char-numeric? c) (eq? c #\_)))
+                  (if (and c (char? c) (or (char-alphabetic? c) (char-numeric? c) (eq? c #\_)))
                       (read-identifier (cons (my-read-char) id))
                       (apply string (reverse id))))))
+
+             (read-comment ; Read a string's content
+              (lambda (str)
+                (let ((c (my-read-char)))
+                  (if (not (or (eof-object? c) (char=? c #\newline)))
+                      (read-comment (cons c str))
+                      (apply string (reverse str))))))
+             (read-string-data ; Read a string's content
+              (lambda (str)
+                (let ((c (my-read-char)))
+                  (if (not (char=? c #\'))
+                      (read-string-data (cons c str))
+                      (apply string (reverse str))))))
              (read-string ; Read a string's content
               (lambda (str)
                 (let ((c (my-peek-char)))
@@ -96,85 +119,90 @@
                         (if (char=? (my-peek-char) #\")
                             (read-string (cons was (cons (my-read-char) str)))
                             (apply string (reverse str))))))))
+             (convert-char
+              (lambda (c)
+
+                (cond
+                  ((char=? c #\space) 'Space)
+                  ((char=? c #\newline) 'NewLine)
+                  ((char=? c (integer->char #x000D)) 'CR) ; Carriage return
+                  ((char=? c #\tab) 'Tab)
+                  ((char=? c (integer->char #x0008)) 'BS); Backspace
+                  ((char=? c (integer->char #x000C)) '0C)
+                  (else 'UF))
+                ))
              )
       
       ;;; Return lexer function:
       (lambda ()
         (let recognize-token ((c (my-read-char)))
-          
           (cond
             ((eof-object? c)
-             (new-token 'lxmEOF ""))
+             null) ;(new-token 'lxmEOF ""))
             ((char=? c #\uFEFF)
-             (new-token 'lxmEOF ""))
+             (recognize-token (my-read-char)))
             ((is-whitespace c)
-             (new-token 'lxmWS c))
+             (new-token 'lxmWS (convert-char c)))
             
-            ((or (eq? c #\_) (char-alphabetic? c))
+            ((or (eq? c #\#) (eq? c #\&) (eq? c #\_) (char-alphabetic? c))
              (let ((id (read-identifier (list c))))
                (new-token (get-keyword-symbol id 'tknID) id)))
             ((char-numeric? c)
              (new-token 'tknNUMBER (read-number (list c))))
+            ((char=? c #\')
+               (new-token 'tknDATE (read-string-data (list))))
             ((char=? c #\")
              (let ((content (read-string (list))))
                (new-token 'tknSTRING content)))
             ((char=? c #\.)
-             (new-token 'lxmDOT "."))
+             (new-token 'lxmDOT null))
             ((char=? c #\,)
-             (new-token 'lxmCOMMA ","))
+             (new-token 'lxmCOMMA null))
             ((char=? c #\;)
-             (new-token 'lxmSEMI ";"))
+             (new-token 'lxmSEMI null))
             ((char=? c #\()
-             (new-token 'lxmOPEN "("))
+             (new-token 'lxmOPEN null))
             ((char=? c #\))
-             (new-token 'lxmCLOSE ")"))
+             (new-token 'lxmCLOSE null))
             
             ((char=? c #\[)
-             (new-token 'lxmBOPEN "["))
+             (new-token 'lxmBOPEN null))
             ((char=? c #\])
-             (new-token 'lxmBCLOSE "]"))
+             (new-token 'lxmBCLOSE null))
             
             ((char=? c #\?)
-             (new-token 'lxmQUEST "?"))
-            ((char=? c #\#)
-             (new-token 'lxmPREPROCESSORSTART "#"))
-            
+             (new-token 'lxmQUEST null))
             ((char=? c #\+)
-             (new-token 'lxmPLUS "+"))
+             (new-token 'lxmPLUS null))
             ((char=? c #\-)
-             (new-token 'lxmMINUS "-"))
+             (new-token 'lxmMINUS null))
+            ((char=? c #\%)
+             (new-token 'lxmMOD null))
             ((char=? c #\*)
-             (new-token 'lxmMUL "*"))
+             (new-token 'lxmMUL null))
             ((char=? c #\/)
              (if (char=? #\/ (my-peek-char))
-                 (let consume-one-line-comment ()
-                   (if (not (char=? (my-peek-char) #\newline))
-                       (begin
-                         (my-read-char)
-                         (if (not (eof-object? (my-peek-char)))
-                             (consume-one-line-comment)
-                             (recognize-token (my-read-char))))
-                       (recognize-token (my-read-char))))
-                 (new-token 'lxmDIV "/")))
+                 (new-token 'lxmCOMMENT (read-comment (list)))
+                 (new-token 'lxmDIV null)))
             ((char=? c #\=)
-             (new-token 'lxmEQU "="))
+             (new-token 'lxmEQU null))
             ((char=? c #\<)
              (cond 
                ((char=? (my-peek-char) #\=)
                 (begin
                   (my-read-char) ; Consume the "="
-                  (new-token 'lxmLT-EQU "<=")))
+                  (new-token 'lxmLT-EQU null)))
                ((char=? (my-peek-char) #\>)
                 (begin
                   (my-read-char) ; Consume the ">"
-                  (new-token 'lxmNOT-EQU "<>")))
-               (#t (new-token 'lxmLT "<"))))
+                  (new-token 'lxmNOT-EQU null)))
+               (#t (new-token 'lxmLT null))))
             ((char=? c #\>)
              (if (char=? (my-peek-char) #\=)
                  (begin
                    (my-read-char) ; Consume the "="
-                   (new-token 'lxmGT-EQU ">="))
-                 (new-token 'lxmGT ">")))
+                   (new-token 'lxmGT-EQU null))
+                 (new-token 'lxmGT null)))
             (else
              (lexer-error  "Illegal character." c))))))))
 
@@ -186,7 +214,7 @@
            [lexer (construct-lexer buf )])
       (let loop ((results '()))
         (let ((next-token   (lexer)))
-          (if (null? (token-type next-token))
+          (if (null?  next-token)
               (reverse results)
               (loop (cons   next-token results))))))))
 
@@ -196,7 +224,7 @@
     (let* ([buf (open-input-file s )]
            [lexer (construct-lexer buf )])
       (let loop ((results '()))
-        (let ((next-token   (lexer)))
-          (if (null? (token-type next-token))
+        (let ([next-token   (lexer)])
+          (if  (null?  next-token)
               (reverse results)
               (loop (cons   next-token results))))))))

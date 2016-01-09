@@ -17,8 +17,18 @@
                                       ("to" "по" to)   ("val" "знач" val)   
                                       ("var" "перем" var)  ("while" "пока" while)   
                                       ("true" "истина" true)   ("false" "ложь" false)  
-                                      ("undefined" "неопределено" undefined)   ("client" "клиент" client)   
-                                      ("server" "сервер" server)  ("externalconection" "внешнеесоединение" externalconnection) ))
+                                      ("undefined" "неопределено" undefined)   ("client" "клиент" client)
+                                      ("#if" "#если" pif)
+                                      ("#endif" "#конецесли" pendif)
+                                      ("#elsif" "#иначеесли" pelsif)
+
+                                      ("eval" "вычислить" eval)
+                                      ("execute" "выполнить" execute)
+                                      ("&onserverwithoutcontexrt" "&насерверебезконтекста" sonservercontext)
+                                      ("&onclient" "&наклиенте" sonclient)
+                                      ("&onserver" "&насервере" sonserver)
+                                      
+                                      ("server" "сервер" server)  ("externalconection" "внешнеесоединение" externalconnection)))
 
 (for-each  (lambda (x)
              (hash-set! hash-keyword (string-upcase (first x )) (string->symbol (string-concatenate (list "lxm" (string-upcase (symbol->string (third x)))))))

@@ -3,7 +3,6 @@
          "lexer-interface.rkt"
          srfi/1)
 
-(provide (all-defined-out))
 
 (struct rule-struct
   (id value))
@@ -37,17 +36,16 @@
     (define/public (get-result)
       (map (lambda (x) (list 'rule-loc '()  (list 'id '() (rule-struct-id x)) (list 'len '() (number->string (rule-struct-value x))))) result) )
     (define/public (get-description)
-       "Рассчитывает количество строк в функции или процедуре. На выходе - структура с идентификатором и количеством строк")
+      (with-output-to-string
+       (lambda ()
+       (printf "Рассчитывает количество строк между токенами  ~a и ~a. В качестве идентификатора возвращает значени токена после ~a" start-token end-token start-token))))
+    
     (define/public (end-work)
       (set! result null)
       (set! token-list null))))
 
 
-;(define tst-data (file->token-list "../test-data/loc-file-test.txt"))
-;(define funcs (new loc-rule% [start 'lxmFUNC] [end 'lxmENDFUNC]))
-;(for-each (lambda (x) (send funcs put-token x)) tst-data)
-;(send funcs get-result)
 
-
-(add-rule 'rule-LOC (new loc-rule% [start 'lxmFUNC] [end 'lxmENDFUNC]) )
+(add-rule 'rule-LOC-func (new loc-rule% [start 'lxmFUNC] [end 'lxmENDFUNC]) )
+(add-rule 'rule-LOC-proc (new loc-rule% [start 'lxmPROC] [end 'lxmENDPROC]) )
 

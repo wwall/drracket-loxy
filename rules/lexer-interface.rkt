@@ -23,10 +23,10 @@
 (define (apply-rules token-list)
   (hash-map rule-hash
      (lambda (k v) (list k (send v init-rule ))))
-  
   (for-each (lambda (y)
               (hash-map rule-hash
                         (lambda (k v) (list k (send v put-token y))))) token-list))
+
 (define (get-result rule-id)	
 	(send (hash-ref rule-hash rule-id) get-result))
 

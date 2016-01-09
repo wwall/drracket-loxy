@@ -27,17 +27,13 @@
  [check-equal? (lex->list "1.2") '((tknNUMBER "1.2"))]
  [check-equal? (lex->list "\"as\"") '((tknSTRING "as"))]
  [check-equal? (lex->list "to") '((lxmTO "to"))]
- [check-equal? (lex->list "x.data") '((tknID "x") (lxmDOT ".") (tknID "data"))]
+ [check-equal? (lex->list "x.data") '((tknID "x") (lxmDOT ()) (tknID "data"))]
  [check-equal? (lex->list "\"строка с экранированной кавычкой \"\"\"") '((tknSTRING "строка с экранированной кавычкой \"\""))]
  [check-equal? (map (lambda (x) (car x)) (lex->list "( ) = >= <= < > <> . , ; + - * /"))
                '(lxmOPEN lxmCLOSE lxmEQU lxmGT-EQU lxmLT-EQU lxmLT lxmGT lxmNOT-EQU lxmDOT lxmCOMMA lxmSEMI lxmPLUS lxmMINUS lxmMUL lxmDIV)]
  [check-equal? (lex->list "// commant 1
                            data
                            //comment 2
-                           for ") '((tknID "data") (lxmFOR "for"))]
- [check-equal? (lex->list "// commant 1
-                           data
-                           //comment at end") '((tknID "data"))]
- 
+                           for ") '((lxmCOMMENT "/ commant 1") (tknID "data") (lxmCOMMENT "/comment 2") (lxmFOR "for"))]
  [check-equal? (lex->list "перем var") '((lxmVAR "перем") (lxmVAR "var"))])
 
