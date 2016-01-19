@@ -18,6 +18,7 @@
 
 
 (provide
+ token
  token-line
  token-column
  token-type
